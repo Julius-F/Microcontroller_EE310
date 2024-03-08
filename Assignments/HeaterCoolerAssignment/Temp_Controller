@@ -158,7 +158,6 @@ MEASD1:
     MOVFF   QUO,    MEASURED_T
     
     BTFSC   NEGTAG,   0
-    GOTO    NEXT
     NEGF    MEASUREDTEMP
     GOTO    NEXT
     
