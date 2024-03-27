@@ -1,0 +1,193 @@
+; Title: Temperature Controller
+;---------------------
+; Program Details:
+;
+; Description: Count up on a seven segment display when a button is pressed
+; count down when a different button is pressed
+; reset to zero when both are pressed
+; File Dependencies / Libraries: None 
+; Compiler: xc8, 2.4
+; Author: Julius Faller
+; Inputs: Measuredtempinput, Referencetempinput
+; Outputs: PORTD, contreg
+; Versions:
+;       V1.0 3/26/24
+
+
+;---------------------
+; Initialization
+;---------------------
+#include "C:\Users\Julius\MPLABXProjects\Counter.X\AssemblyConfig.inc"
+#include <xc.inc>
+
+
+
+;---------------------
+; Program Inputs
+;---------------------
+
+    
+;---------------------
+; Definitions
+;---------------------
+
+    ; codenames for some definitions because mplab doesnt like using zero
+    ; or letters for variable names
+    ZULU	EQU 0X3F    
+    ONE		EQU 0x06
+    TWO		EQU 0x5B
+    THREE	EQU 0x4F
+    FOUR	EQU 0x66
+    FIVE	EQU 0x6D
+    SIX		EQU 0x7D
+    SEVEN	EQU 0x07
+    EIGHT	EQU 0x7F
+    NINE	EQU 0x67
+    ALPHA	EQU 0x77
+    BRAVO	EQU 0x7C
+    CHARLIE	EQU 0x39
+    DELTA	EQU 0x5E
+    ECHO	EQU 0x79
+    FOXTROT	EQU 0x71
+    
+;---------------------
+; Program Constants
+;---------------------
+    
+    TOPREG	EQU	0X30
+    BOTREG	EQU	0X31
+    INNERLOOP	EQU	0X32	
+    OUTERLOOP	EQU	0X33
+
+
+    
+
+;---------------------
+; Main Program
+;---------------------
+
+ PSECT absdata,abs,ovrld
+    ; Start program at 0x20
+    ORG 0020H 
+    CALL    STARTUP
+    
+TESTBUTTONS:
+    MOVLW   0X03    ; to check if both are pressed
+    CPFSEQ  PORTB
+    GOTO    CHECKDOWN
+    CALL    RESETCOUNTER
+    GOTO    ENDCHECK
+CHECKDOWN:
+    MOVLW   0X02
+    CPFSEQ  PORTB
+    GOTO    CHECKUP
+    CALL    COUNTDOWN
+    GOTO    ENDCHECK
+CHECKUP:
+    MOVLW   0X01
+    CPFSEQ  PORTB
+    GOTO    ENDCHECK
+    CALL    COUNTUP
+ENDCHECK:
+    CALL    DELAY
+    GOTO    TESTBUTTONS
+    
+RESETCOUNTER:
+    LFSR	1,0X40
+    RETURN
+    
+COUNTDOWN:
+    MOVLW   POSTDEC1
+    MOVWF   PORTD
+    MOVFF   BOTREG,WREG
+    CPFSEQ  INDF1
+    RETURN
+    LFSR    1,0X4F
+    RETURN
+    
+COUNTUP:
+    MOVLW   POSTINC1
+    MOVWF   PORTD
+    MOVFF   TOPREG,WREG
+    CPFSEQ  INDF1
+    RETURN
+    LFSR    1,0X40
+    RETURN
+    
+STARTUP:
+
+    BANKSEL	PORTD 
+    CLRF	PORTD	;initialize PORTA
+    BANKSEL	LATD	;data Latch
+    CLRF	LATD 
+    BANKSEL	ANSELD 
+    CLRF	ANSELD	;digital I/O
+    BANKSEL	TRISD 
+    MOVLW	0X00 
+    MOVWF	TRISD 
+    
+        BANKSEL	PORTB 
+    CLRF	PORTB	;initialize PORTB
+    BANKSEL	LATB	;data Latch
+    CLRF	LATB 
+    BANKSEL	ANSELB 
+    CLRF	ANSELB	;digital I/O
+    BANKSEL	TRISB 
+    MOVLW	0XFF	;port b is an input
+    MOVWF	TRISB    
+    LFSR	1,0X40	;initialize pointer
+    ; set values for zero through f on seven segment
+    MOVLW   ZULU
+    MOVWF   POSTINC1
+    MOVLW   ONE
+    MOVWF   POSTINC1
+    MOVLW   TWO
+    MOVWF   POSTINC1
+    MOVLW   THREE
+    MOVWF   POSTINC1
+    MOVLW   FOUR
+    MOVWF   POSTINC1
+    MOVLW   FIVE
+    MOVWF   POSTINC1
+    MOVLW   SIX
+    MOVWF   POSTINC1
+    MOVLW   SEVEN
+    MOVWF   POSTINC1
+    MOVLW   EIGHT
+    MOVWF   POSTINC1
+    MOVLW   NINE
+    MOVWF   POSTINC1
+    MOVLW   ALPHA
+    MOVWF   POSTINC1
+    MOVLW   BRAVO
+    MOVWF   POSTINC1
+    MOVLW   CHARLIE
+    MOVWF   POSTINC1
+    MOVLW   DELTA
+    MOVWF   POSTINC1
+    MOVLW   ECHO
+    MOVWF   POSTINC1
+    MOVLW   FOXTROT
+    MOVWF   POSTINC1
+    LFSR	1,0X40
+    ;set values for comparison for reset at upper and lower limits
+    MOVLW   0X3F
+    MOVWF   BOTREG  
+    MOVLW   0X50
+    MOVWF   TOPREG
+    RETURN
+DELAY:
+    
+    MOVLW   0XA0
+    MOVWF   OUTERLOOP
+    MOVWF   INNERLOOP
+    
+LOOP:
+    DECF    INNERLOOP,1
+    BNZ	    LOOP
+    MOVLW   0XA0
+    MOVWF   INNERLOOP
+    DECF    OUTERLOOP,1
+    BNZ	    LOOP
+    RETURN
+    
