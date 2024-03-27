@@ -33,22 +33,22 @@
 
     ; codenames for some definitions because mplab doesnt like using zero
     ; or letters for variable names
-    ZULU	EQU 0X3F    
-    ONE		EQU 0x06
-    TWO		EQU 0x5B
-    THREE	EQU 0x4F
-    FOUR	EQU 0x66
-    FIVE	EQU 0x6D
-    SIX		EQU 0x7D
-    SEVEN	EQU 0x07
-    EIGHT	EQU 0x7F
-    NINE	EQU 0x67
-    ALPHA	EQU 0x77
-    BRAVO	EQU 0x7C
-    CHARLIE	EQU 0x39
-    DELTA	EQU 0x5E
-    ECHO	EQU 0x79
-    FOXTROT	EQU 0x71
+    ZULU	EQU 00000001    
+    ONE		EQU 01101101
+    TWO		EQU 00100010
+    THREE	EQU 10000010
+    FOUR	EQU 11000100
+    FIVE	EQU 10001000
+    SIX		EQU 00001000
+    SEVEN	EQU 11000011
+    EIGHT	EQU 00000000
+    NINE	EQU 11000000
+    ALPHA	EQU 01000000
+    BRAVO	EQU 00001100
+    CHARLIE	EQU 00101001
+    DELTA	EQU 00000110
+    ECHO	EQU 00101000
+    FOXTROT	EQU 01101000
     
 ;---------------------
 ; Program Constants
@@ -210,5 +210,3 @@ LOOP:
     BNZ	    LOOP
     RETURN
     
-
-
