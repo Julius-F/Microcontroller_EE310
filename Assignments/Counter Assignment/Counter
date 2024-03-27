@@ -1,4 +1,4 @@
-; Title: Temperature Controller
+; Title: Counter
 ;---------------------
 ; Program Details:
 ;
@@ -8,8 +8,8 @@
 ; File Dependencies / Libraries: None 
 ; Compiler: xc8, 2.4
 ; Author: Julius Faller
-; Inputs: Measuredtempinput, Referencetempinput
-; Outputs: PORTD, contreg
+; Inputs: PORTB
+; Outputs: PORTD
 ; Versions:
 ;       V1.0 3/26/24
 
@@ -210,3 +210,5 @@ LOOP:
     BNZ	    LOOP
     RETURN
     
+
+
