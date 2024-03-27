@@ -17,7 +17,7 @@
 ;---------------------
 ; Initialization
 ;---------------------
-#include "C:\Users\Julius\MPLABXProjects\Counter.X\AssemblyConfig.inc"
+#include "C:\Users\jmelf\MPLABXProjects\Counter.X\AssemblyConfig.inc"
 #include <xc.inc>
 
 
@@ -88,11 +88,13 @@ CHECKUP:
     GOTO    ENDCHECK
     CALL    COUNTUP
 ENDCHECK:
-   ; CALL    DELAY
+    CALL    DELAY
     GOTO    TESTBUTTONS
     
 RESETCOUNTER:
-    LFSR	1,0X40
+    LFSR    1,0X40
+    MOVFF   INDF1,WREG
+    MOVWF   PORTD
     MOVLW   0X01
     MOVWF   COUNTERTRACK
     RETURN
@@ -124,10 +126,12 @@ REGUP:
     MOVFF   PREINC1,WREG
     MOVWF   PORTD
     RETURN
-BACKTOBOT 
+BACKTOBOT: 
     MOVLW   0X01
     MOVWF   COUNTERTRACK
     LFSR    1,0X0040
+    MOVFF   INDF1,WREG
+    MOVWF   PORTD
     RETURN
     
 STARTUP:
@@ -185,21 +189,22 @@ STARTUP:
     MOVWF   POSTINC1
     MOVLW   FOXTROT
     MOVWF   POSTINC1
-    LFSR	1,0X0040
+    LFSR    1,0X0040
+    MOVFF   INDF1,PORTD
     ;create counter to keep track of resets
     MOVLW   0X01
     MOVWF   COUNTERTRACK
     RETURN
 DELAY:
     
-    MOVLW   0X04
+    MOVLW   0XFF
     MOVWF   OUTERLOOP
     MOVWF   INNERLOOP
     
 LOOP:
     DECF    INNERLOOP,1
     BNZ	    LOOP
-    MOVLW   0X01
+    MOVLW   0XFF
     MOVWF   INNERLOOP
     DECF    OUTERLOOP,1
     BNZ	    LOOP
