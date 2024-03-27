@@ -54,10 +54,9 @@
 ; Program Constants
 ;---------------------
     
-    TOPREG	EQU	0X30
-    BOTREG	EQU	0X31
-    INNERLOOP	EQU	0X32	
-    OUTERLOOP	EQU	0X33
+    COUNTERTRACK    EQU 0X31
+    INNERLOOP	    EQU	0X32	
+    OUTERLOOP	    EQU	0X33
 
 
     
@@ -94,24 +93,30 @@ ENDCHECK:
     
 RESETCOUNTER:
     LFSR	1,0X40
+    MOVLW   0X01
+    MOVWF   COUNTERTRACK
     RETURN
     
 COUNTDOWN:
     MOVLW   POSTDEC1
+    MOVLW   INDF1
     MOVWF   PORTD
-    MOVFF   BOTREG,WREG
-    CPFSEQ  INDF1
+    DECFSZ  COUNTERTRACK,1
     RETURN
     LFSR    1,0X4F
+    MOVLW   0X10
+    MOVWF   COUNTERTRACK
     RETURN
     
 COUNTUP:
-    MOVLW   POSTINC1
+    MOVLW   PREINC1
     MOVWF   PORTD
-    MOVFF   TOPREG,WREG
-    CPFSEQ  INDF1
+    INCF    COUNTERTRACK,1
+    MOVLW   0X10
+    CPFSGT  COUNTERTRACK
     RETURN
-    LFSR    1,0X40
+    MOVLW   0X01
+    MOVWF   COUNTERTRACK
     RETURN
     
 STARTUP:
@@ -170,11 +175,9 @@ STARTUP:
     MOVLW   FOXTROT
     MOVWF   POSTINC1
     LFSR	1,0X40
-    ;set values for comparison for reset at upper and lower limits
-    MOVLW   0X3F
-    MOVWF   BOTREG  
-    MOVLW   0X50
-    MOVWF   TOPREG
+    ;create counter to keep track of resets
+    MOVLW   0X00
+    MOVWF   COUNTERTRACK
     RETURN
 DELAY:
     
