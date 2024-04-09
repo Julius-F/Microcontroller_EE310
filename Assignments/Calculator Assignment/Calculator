@@ -1,17 +1,17 @@
 /*
  * ---------------------
- * Title: Simple LED Blinking 
+ * Title: Calculator
  * ---------------------
  * Program Details:
- *  The purpose of this program is to simply blink an LED 
- * Inputs: myDelay 
- * Outputs: RD0 (output)
+ *  To do basic arithmetic to two two digit inputs
+ * Inputs:
+ * Outputs:
  * Setup: C- Simulator
- * Date: Feb 24, 2023
+ * Date: 4/8/24
  * File Dependencies / Libraries: It is required to include the 
  * Configuration Header File 
  * Compiler: xc8, 2.4
- * Author: Farid Farahmand
+ * Author: Julius Faller
  * Versions:
  *      V1.0: Original
  * Useful links:  
