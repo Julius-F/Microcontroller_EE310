@@ -111,7 +111,7 @@ void display(int display)
 {
     PORTD = 0b00000010;
     int inputcheck = 0;
-    while (inputcheck = 0)
+    while (inputcheck == 0)
     {
         if (PORTD == 0b00010010 )
         {
@@ -144,7 +144,7 @@ for(;;)
     delay(500000);
     X_Input_REG = combine_inputs(xhigh,xlow);
     PORTB = 0b10000000;
-    Operation_REG = getoperator;
+    Operation_REG = getoperator();
     delay(500000);
     yhigh = getnum();
     delay(500000);
