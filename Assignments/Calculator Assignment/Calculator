@@ -93,7 +93,7 @@ int combine_inputs(int inputhigh, int inputlow)
     return fullinput;
 }
 
-int execute_operation(int input1, int input2, int operator)
+signed int execute_operation(int input1, int input2, int operator)
 {
     int output;
     if(operator == 1)
@@ -128,7 +128,7 @@ int Y_Input_REG;
 int yhigh;
 int ylow;
 int Operation_REG;
-int Display_Result_REG;
+signed int Display_Result_REG;
 
 void main(){
 TRISD= 0b11110000; // Set port d to half outputs and half inputs to interface
