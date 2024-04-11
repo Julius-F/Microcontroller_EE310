@@ -1,0 +1,6 @@
+
+for(;;)
+{
+PORTD = 0b00001111;
+PORTB = PORTD;
+}
