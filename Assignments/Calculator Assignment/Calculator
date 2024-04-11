@@ -82,7 +82,7 @@
 #include <stdlib.h>
 
 
-int getnum()
+char getnum()
 {
 
     for(;;){
@@ -131,9 +131,9 @@ char getoperator()
 
 
 
-void delay(char delaytime)
+void delay(long delaytime)
 {
-    char count = 0;
+    long count = 0;
     while (count  < delaytime)
     {count += 1;}
 }
@@ -159,7 +159,7 @@ char execute_operation(char input1, char input2, char operator)
     return output;
 }
 
-void display(char display)
+void display( char display)
 {
     PORTD = 0b00000010;
     char inputcheck = 0;
@@ -180,7 +180,8 @@ char Y_Input_REG;
 char yhigh;
 char ylow;
 char Operation_REG;
-signed char Display_Result_REG;
+char Display_Result_REG;
+signed char test;
 
 void main(){
 TRISD= 0b11110000; // Set port d to half outputs and half inputs to interface
@@ -188,22 +189,32 @@ TRISD= 0b11110000; // Set port d to half outputs and half inputs to interface
 TRISB= 0b00000000; // set port b to output
 ANSELB = 0;
 ANSELD = 0;
+test = -64;
+PORTB = test;
+delay(100000);
+test = -32;
+PORTB = test;
 for(;;)
 {
     xhigh = getnum();
-    delay(500000);
+    delay(20000);
+    PORTB = 1;
     xlow = getnum();
-    delay(500000);
+    delay(20000);
     X_Input_REG = combine_inputs(xhigh,xlow);
-    PORTB = 0b10000000;
+    //PORTB = 0b10000000;
+    PORTB = X_Input_REG;
     Operation_REG = getoperator();
-    delay(500000);
+    delay(20000);
+    PORTB = 2;
     yhigh = getnum();
-    delay(500000);
+    delay(20000);
+    PORTB = 1;
     ylow = getnum();
-    delay(500000);
+    delay(20000);
     Y_Input_REG = combine_inputs(yhigh,ylow);
-    PORTB = 0b11000000;
+    PORTB = Y_Input_REG;
+    //PORTB = 0b11000000;
     Display_Result_REG=execute_operation(X_Input_REG,Y_Input_REG,Operation_REG);
     display(Display_Result_REG);
     Y_Input_REG = 0;
