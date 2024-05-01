@@ -114,7 +114,7 @@ void main(void)
 
         strcat(data," V");	/*Concatenate result and unit to print*/
         //LCD_String_xy(2,4,data);/*Send string data for printing*/
-        
+    LCD_String_xy(1,0,"Analog Input");
     LCD_String_xy(2,0,data);
     }
 }
