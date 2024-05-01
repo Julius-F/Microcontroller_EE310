@@ -1,8 +1,19 @@
 /*
- * The purpose of this program is to demonstrate how a 20x2 LCD can be interfaced with a PIC processor. 
- * Refer to the lecture slides for more details on the physical connections.
- * You may want to consider changing this code, as needed, depending on your hardware. 
- * Author: Farid Farahmand 
+ * ---------------------
+ * Title: LCD
+ * ---------------------
+ * Program Details:
+ * Display a voltage read by the ADC on an LCD
+ * Inputs: Port A pin 0
+ * Outputs: PORTB, PORTD
+ * Setup: C- Simulator
+ * Date: 5/1/24
+ * File Dependencies / Libraries: It is required to include the 
+ * Configuration Header File 
+ * Compiler: xc8, 2.4
+ * Author: Julius Faller
+ * Versions:
+ *      V1.0: Original
  */
 
 
