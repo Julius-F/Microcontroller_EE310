@@ -1,266 +1,237 @@
-
-; Title: LCD ADC Display
+; Title: Counter
 ;---------------------
 ; Program Details:
 ;
-; Description: Display the measured voltage from the ADC on an LCD
+; Description: Count up on a seven segment display when a button is pressed
+; count down when a different button is pressed
+; reset to zero when both are pressed
 ; File Dependencies / Libraries: None 
 ; Compiler: xc8, 2.4
 ; Author: Julius Faller
 ; Inputs: PORTB
 ; Outputs: PORTD
 ; Versions:
-;       V1.0 5/1/24
+;       V1.0 3/26/24
 
 
-/* SP relaxed compliance floating point add intrinsic function */
-#include <stdint.h>
-#include "fpform.h"
+;---------------------
+; Initialization
+;---------------------
+#include "C:\Users\jmelf\MPLABXProjects\Counter.X\AssemblyConfig.inc"
+#include <xc.inc>
 
 
-// single monlithic add function
 
-/* SP Add */
-SP
-SPADD(SP b, SP a) {
-#define A_FRACTION    (*(SFP *)&a)
-#define B_FRACTION    (*(SFP *)&b)
-	unsigned char signs;	/* leftmost bit stores sign of b, next bit stores
-				   0 if and only if a and b have the same sign  */
-	unsigned char bexp;	/* Dst exponent */
-	unsigned char aexp;	/* Src exponent */
-	unsigned char grs;	/* Guard, round, sticky */
+;---------------------
+; Program Inputs
+;---------------------
+
+    
+;---------------------
+; Definitions
+;---------------------
+
+    ; codenames for some definitions because mplab doesnt like using zero
+    ; or letters for variable names
+    ZULU	EQU 0X01    
+    ONE		EQU 0X6D
+    TWO		EQU 0X22
+    THREE	EQU 0X82
+    FOUR	EQU 0XC4
+    FIVE	EQU 0X88
+    SIX		EQU 0X08
+    SEVEN	EQU 0XC3
+    EIGHT	EQU 0X00
+    NINE	EQU 0XC0
+    ALPHA	EQU 0X40
+    BRAVO	EQU 0X0C
+    CHARLIE	EQU 0X29
+    DELTA	EQU 0X06
+    ECHO	EQU 0X28
+    FOXTROT	EQU 0X68
+    
+;---------------------
+; Program Constants
+;---------------------
+    
+    COUNTERTRACK    EQU 0X31
+    INNERLOOP	    EQU	0X32	
+    OUTERLOOP	    EQU	0X33
 
 
-	/* Unpack and check operands */
-	signs = B_FRACTION.fAsBytes.d & 0x80;
-	bexp = (unsigned char)(B_FRACTION.fAsBytes.d << 1);
-	if (B_FRACTION.fAsBytes.c & 0x80) {
-		bexp |= 0x1;
-	}
+    
 
-	/* Destination normal ? */
-	if (bexp) {
-		/* Destination inf or NaN ? */
-		if (bexp == 0xFF) {
-			/* Make it inf */
-			b = 0;
-		}
-		// OR in the hidden 1-bit to b's fraction
-		B_FRACTION.i |= (int32_t) 1 << SPFRCB;
-		// and zero out the upper byte so we can safely shift
-		B_FRACTION.fAsBytes.d = 0;
-	}
-	else {
-		/* Make it zero */
-		b = 0;
-	}
+;---------------------
+; Main Program
+;---------------------
 
-	aexp = A_FRACTION.fAsBytes.d & 0x80;
-	// sign of a different from sign of b?
-	if (aexp != signs) {
-		signs |= 0x40;
-	}
-	aexp = (unsigned char)(A_FRACTION.fAsBytes.d << 1);
-	if (A_FRACTION.fAsBytes.c & 0x80) {
-		aexp |= 0x1;
-	}
+ PSECT absdata,abs,ovrld
+    ; Start program at 0x20
+    ORG 0020H 
+    CALL    STARTUP
+    
+TESTBUTTONS:
+    BANKSEL PORTB
+    MOVLW   0X03    ; to check if both are pressed
+    CPFSEQ  PORTB
+    GOTO    CHECKDOWN
+    CALL    RESETCOUNTER
+    GOTO    ENDCHECK
+CHECKDOWN:
+    MOVLW   0X02
+    CPFSEQ  PORTB
+    GOTO    CHECKUP
+    CALL    COUNTDOWN
+    GOTO    ENDCHECK
+CHECKUP:
+    MOVLW   0X01
+    CPFSEQ  PORTB
+    GOTO    ENDCHECK
+    CALL    COUNTUP
+    GOTO    ENDCHECK
+ENDCHECK:
+    CALL    DELAY
+    GOTO    TESTBUTTONS
+    
+RESETCOUNTER:
+    BANKSEL 0X00
+    LFSR    1,0X40
+    MOVFF   INDF1,WREG
+    BANKSEL PORTD
+    MOVWF   PORTD
+    BANKSEL 0X00
+    MOVLW   0X01
+    MOVWF   COUNTERTRACK
+    RETURN
+    
+COUNTDOWN:
+    BANKSEL 0X00
+    DECFSZ  COUNTERTRACK,1
+    GOTO    REGDOWN
+    GOTO    BACKTOTOP    
+REGDOWN:    
+    MOVFF   POSTDEC1,WREG
+    MOVFF   INDF1,WREG
+    BANKSEL PORTD
+    MOVWF   PORTD
+    BANKSEL 0X00
+    RETURN
+BACKTOTOP:
+    LFSR    1,0X004F
+    MOVFF   INDF1,WREG
+    BANKSEL PORTD
+    MOVWF   PORTD
+    BANKSEL 0X00
+    MOVLW   0X10
+    MOVWF   COUNTERTRACK
+    RETURN
+    
+COUNTUP:    
+    BANKSEL 0X00
+    INCF    COUNTERTRACK,1
+    MOVLW   0X10
+    CPFSGT  COUNTERTRACK
+    GOTO    REGUP
+    GOTO    BACKTOBOT
+    
+REGUP:
+    MOVFF   PREINC1,WREG
+    BANKSEL PORTD
+    MOVWF   PORTD
+    BANKSEL 0X00
+    RETURN
+BACKTOBOT: 
+    MOVLW   0X01
+    MOVWF   COUNTERTRACK
+    LFSR    1,0X0040
+    MOVFF   INDF1,WREG
+    BANKSEL PORTD
+    MOVWF   PORTD
+    BANKSEL 0X00
+    RETURN
+    
+STARTUP:
 
-	/* Destination normal ? */
-	if (aexp) {
-		/* Destination inf or NaN ? */
-		if (aexp == 0xFF) {
-			/* Make it inf */
-			a = 0;
-		}
-		// OR in the hidden 1-bit to a's fraction
-		A_FRACTION.i |= (int32_t) 1 << SPFRCB;
-		// and zero out the upper bits so we can safely shift
-		A_FRACTION.fAsBytes.d = 0;
-	}
-	else {
-		/* Make it zero */
-		a = 0;
-	}
+    BANKSEL	PORTD 
+    CLRF	PORTD	;initialize PORTA
+    BANKSEL	LATD	;data Latch
+    CLRF	LATD 
+    BANKSEL	ANSELD 
+    CLRF	ANSELD	;digital I/O
+    BANKSEL	TRISD 
+    MOVLW	0X00 
+    MOVWF	TRISD 
+    
+    BANKSEL	PORTB 
+    CLRF	PORTB	;initialize PORTB
+    BANKSEL	LATB	;data Latch
+    CLRF	LATB 
+    BANKSEL	ANSELB 
+    CLRF	ANSELB	;digital I/O
+    BANKSEL	TRISB 
+    MOVLW	0XFF	;port b is an input
+    MOVWF	TRISB    
+    LFSR	1,0X40	;initialize pointer
+    ; set values for zero through f on seven segment
+    MOVLW   ZULU
+    MOVWF   POSTINC1
+    MOVLW   ONE
+    MOVWF   POSTINC1
+    MOVLW   TWO
+    MOVWF   POSTINC1
+    MOVLW   THREE
+    MOVWF   POSTINC1
+    MOVLW   FOUR
+    MOVWF   POSTINC1
+    MOVLW   FIVE
+    MOVWF   POSTINC1
+    MOVLW   SIX
+    MOVWF   POSTINC1
+    MOVLW   SEVEN
+    MOVWF   POSTINC1
+    MOVLW   EIGHT
+    MOVWF   POSTINC1
+    MOVLW   NINE
+    MOVWF   POSTINC1
+    MOVLW   ALPHA
+    MOVWF   POSTINC1
+    MOVLW   BRAVO
+    MOVWF   POSTINC1
+    MOVLW   CHARLIE
+    MOVWF   POSTINC1
+    MOVLW   DELTA
+    MOVWF   POSTINC1
+    MOVLW   ECHO
+    MOVWF   POSTINC1
+    MOVLW   FOXTROT
+    MOVWF   POSTINC1
+    LFSR    1,0X40
+    MOVFF   INDF1,PORTD
+    ;create counter to keep track of resets
+    MOVLW   0X01
+    MOVWF   COUNTERTRACK
+    RETURN
+DELAY:
+    
+    MOVLW   0XFF
+    MOVWF   OUTERLOOP
+    MOVWF   INNERLOOP
+    
+LOOP:
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DECF    INNERLOOP,1
+    BNZ	    LOOP
+    MOVLW   0XFF
+    MOVWF   INNERLOOP
+    DECF    OUTERLOOP,1
+    BNZ	    LOOP
+    RETURN
+    
+    END
+    
 
-	/* Add */
-
-	/* Get smaller operand in b */
-
-	if (aexp < bexp) {
-		// do I need to reverse the sign?
-		if (signs & 0x40) {
-			signs ^= 0x80;
-		}
-		// use  grs as swap space
-		grs = bexp;
-		bexp = aexp;
-		aexp = grs;
-		grs = B_FRACTION.fAsBytes.a;
-		B_FRACTION.fAsBytes.a = A_FRACTION.fAsBytes.a;
-		A_FRACTION.fAsBytes.a = grs;
-		grs = B_FRACTION.fAsBytes.b;
-		B_FRACTION.fAsBytes.b = A_FRACTION.fAsBytes.b;
-		A_FRACTION.fAsBytes.b = grs;
-		grs = B_FRACTION.fAsBytes.c;
-		B_FRACTION.fAsBytes.c = A_FRACTION.fAsBytes.c;
-		A_FRACTION.fAsBytes.c = grs;
-		grs = B_FRACTION.fAsBytes.d;
-		B_FRACTION.fAsBytes.d = A_FRACTION.fAsBytes.d;
-		A_FRACTION.fAsBytes.d = grs;
-	}
-
-	grs = 0;
-	/* If all ones will shift through G,R, then S = significand nonzero */
-	if ((aexp - bexp) > (SPFRCB + 2)) {
-		grs = B_FRACTION.i ? 1 : 0;
-		B_FRACTION.i = 0;
-		bexp = aexp;
-	}
-	else {
-		while (bexp < aexp) {
-			/* Shift smaller operand right until exponents equal */
-			/* save the bits shifted out in grs    */
-			if (grs & 1) {
-				grs = (grs >> 1) | 0x1;
-			}
-			else {
-				grs >>= 1;
-			}
-			if (B_FRACTION.i & 0x1) {
-				grs |= 0x80;
-			}
-			B_FRACTION.i >>= 1;
-			bexp++;
-		}
-	}
-
-	/* Add or subtract magnitude ? */
-	if (!(signs & 0x40)) {
-
-		/* Quick exit for 0 + 0, same sign */
-		if (!bexp) {
-			return 0.0;
-		}
-
-		/* Add magnitude */
-		B_FRACTION.i += A_FRACTION.i;
-		// did it overflow?
-		if (B_FRACTION.i & ((int32_t) 1 << (SPFRCB + 1))) {
-			if (grs & 1) {
-				grs = (grs >> 1) | 0x1;
-			}
-			else {
-				grs >>= 1;
-			}
-			if (B_FRACTION.i & 1) {
-				grs |= 0x80;
-			}
-			B_FRACTION.i >>= 1;
-			++bexp;
-		}
-
-	}
-	else {
-
-		/* Subtract magnitude */
-
-		if (B_FRACTION.i < A_FRACTION.i) {
-			B_FRACTION.i = A_FRACTION.i - B_FRACTION.i - 1;
-			signs ^= 0x80;
-			grs = ~grs + 1;
-			if (!grs) {
-				++B_FRACTION.i;
-			}
-		}
-		else {
-			B_FRACTION.i -= A_FRACTION.i;
-		}
-
-		/* True zero ? */
-		if (!B_FRACTION.i && !grs) {
-			return 0.0;
-		}
-
-		/* Renormalize */
-		while (!(B_FRACTION.i & ((int32_t) 1 << SPFRCB))) {
-			B_FRACTION.i <<= 1;
-			if (grs & 0x80) {
-				B_FRACTION.i |= 0x1;
-			}
-			if (grs & 1) {
-				grs = (unsigned char)((grs << 1) | 0x1);
-			}
-			else {
-				grs <<= 1;
-			}
-			if (bexp) {
-				--bexp;
-			}
-		}
-	}
-
-	/* Round, check overflow, underflow */
-
-	/* Round */
-	// reuse aexp as the rounding flag ...
-	aexp = 0;
-	if (grs & 0x80) {
-		if (grs & 0x7f) {
-			aexp = 1;
-		}
-		else {
-			if (B_FRACTION.i & 1) {
-				aexp = 1;
-			}
-		}
-	}
-	if (aexp) {
-		++B_FRACTION.i;
-		if (B_FRACTION.i & ((int32_t) 1 << (SPFRCB + 1))) {
-			B_FRACTION.i = B_FRACTION.i >> 1;
-			if (!(bexp == 0xFF)) {
-				++bexp;
-			}
-		}
-	}
-
-	/* Overflow ? Return infinity */
-	/* Underflow ? Flush to zero */
-	if (bexp == 0xFF || bexp == 0) {
-		B_FRACTION.i = 0;
-                // no negative 0 for now
-                if (bexp == 0) {
-		        signs=0;
-                }
-	}
-
-	/* Pack and return result */
-	// set the low bit of the exponent ...
-	if (bexp & 0x1) {
-		B_FRACTION.fAsBytes.c |= 0x80;
-	}
-	// AND out the leading 1
-	else {
-		B_FRACTION.fAsBytes.c &= 0x7F;
-	}
-	B_FRACTION.fAsBytes.d = bexp >> 1;
-	if (signs & 0x80) {
-		B_FRACTION.fAsBytes.d |= 0x80;
-	}
-	return b;
-}
-
-/* SP Subtract */
-#ifdef __PICC__
-SP
-SPSUB(SP a, SP b)
-#else
-SP
-SPSUB(SP b, SP a)
-#endif
-{
-	(*(SFP *) & a).i ^= 0x80000000; 
-	return __fladd(b, a);
-}
 
